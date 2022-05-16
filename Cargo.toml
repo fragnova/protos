@@ -3,6 +3,8 @@ name = "protos"
 version = "0.1.0"
 edition = "2021"
 repository = "https://github.com/fragcolor-xyz/protos.git"
+description = "Protos common library including cateogires and traits"
+license = "BSD-3-Clause"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
