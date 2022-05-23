@@ -2,10 +2,6 @@
  Program
  ; TODO - add documentation about the trait itself
  ; TODO - add documentation about the events
- :OnRez [{:Input Type.Any
-          :Output Type.Any
-          :Type Type.Block} ; Chain and Block would use this notation to specify further params (Input, Output, etc.)
-         Type.None]
- :OnDerez [Type.Block ; short version of the above with Any/Any types for in/out
-           Type.None]
- :Advance [Type.Block])
+ :OnRez [[Type.Block] Type.None]
+ :OnDerez [[Type.Block] Type.None]
+ :Advance [[Type.Block]])
