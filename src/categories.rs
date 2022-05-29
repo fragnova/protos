@@ -1,12 +1,21 @@
 use parity_scale_codec::{Compact, Decode, Encode};
-use scale_info::prelude::vec::Vec;
+use scale_info::prelude::{string::String, vec::Vec};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
 #[derive(Encode, Decode, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize), serde(rename_all = "camelCase"))]
-pub struct WireTrait(Compact<u32>);
+pub struct ShardsTrait(Compact<u32>);
+
+#[derive(Encode, Decode, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize), serde(rename_all = "camelCase"))]
+pub enum ShardsFormat {
+	/// Canonical textual format interpreted by the Shards runtime
+	Edn,
+	/// Serialized binary format
+	Binary,
+}
 
 // serde(rename_all = "camelCase") is needed or polkadot.js will not be able to deserialize
 
@@ -17,10 +26,6 @@ pub enum AudioCategories {
 	OggFile,
 	/// A compressed audio file in the mp3 format
 	Mp3File,
-	/// A shards script that returns an effect wire that requires an input, validated
-	Effect,
-	/// A shards script that returns an instrument wire (no audio input), validated
-	Instrument,
 }
 
 #[derive(Encode, Decode, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
@@ -76,32 +81,18 @@ pub enum BinaryCategories {
 	BlendFile,
 }
 
-#[derive(Encode, Decode, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize), serde(rename_all = "camelCase"))]
-pub enum WireCategories {
-	/// A shards script that returns a generic wire (we validate that)
-	Generic,
-	/// An animation sequence in shards edn
-	Animation,
-	/// A shards script that returns a shader wire constrained to be a vertex shader (we validate that)
-	VertexShader,
-	/// A shards script that returns a shader wire constrained to be a fragment shader (we validate that)
-	FragmentShader,
-	/// A shards script that returns a shader wire constrained to be a compute shader (we validate that)
-	ComputeShader,
-}
-
 /// Types of categories that can be attached to a Proto-Fragment to describe it (e.g Code, Audio, Video etc.)
 #[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize), serde(rename_all = "camelCase"))]
 pub enum Categories {
 	/// Text of the supported sub-categories
 	Text(TextCategories),
-	/// A Scripting Trait declaration, traits are unique, and are used to describe how Wires work (Scripts)
-	Trait(WireTrait),
-	/// Shards scripts (Wires) of various sub-categories
-	/// Wires also can have interoperability traits to describe how they can be used in other wires
-	Wire(WireCategories, Vec<WireTrait>),
+	/// A Scripting Trait declaration, traits are unique, and are used to describe how Shards work (Scripts)
+	/// Name, Description, and unique trait ID
+	Trait(String, String, ShardsTrait),
+	/// Shards scripts of various sub-categories
+	/// Shards use interoperability traits to describe how they can be used in other shards
+	Shards(ShardsFormat, Vec<ShardsTrait>),
 	/// Audio files and effects
 	Audio(AudioCategories),
 	/// Textures of the supported sub-categories
