@@ -1,7 +1,9 @@
 use bitflags::bitflags;
+use parity_scale_codec::{Decode, Encode};
 
 bitflags! {
   /// Permissions for fragments and fragment's bundles.
+  #[derive(Encode, Decode, scale_info::TypeInfo)]
   pub struct FragmentPerms: u32 {
     const NONE = 0;
     const EDIT = 1;

@@ -1,6 +1,6 @@
 [package]
 name = "protos"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2021"
 repository = "https://github.com/fragcolor-xyz/protos.git"
 description = "Protos common library including cateogires and traits"
