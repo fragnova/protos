@@ -13,7 +13,19 @@ use serde::{Deserialize, Serialize};
     derive(Serialize, Deserialize),
     serde(rename_all = "camelCase")
 )]
-pub struct ShardsTrait(Compact<u32>);
+pub struct ShardsTrait(Compact<u64>);
+
+#[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize),
+    serde(rename_all = "camelCase")
+)]
+pub struct ShardsTraitInfo {
+    pub name: String,
+    pub description: String,
+    pub id: ShardsTrait,
+}
 
 #[derive(Encode, Decode, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
 #[cfg_attr(
@@ -26,6 +38,18 @@ pub enum ShardsFormat {
     Edn,
     /// Serialized binary format
     Binary,
+}
+
+#[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
+#[cfg_attr(
+    feature = "std",
+    derive(Serialize, Deserialize),
+    serde(rename_all = "camelCase")
+)]
+pub struct ShardsScriptInfo {
+    pub format: ShardsFormat,
+    pub requiring: Vec<ShardsTrait>,
+    pub implementing: Vec<ShardsTrait>,
 }
 
 // serde(rename_all = "camelCase") is needed or polkadot.js will not be able to deserialize
@@ -132,10 +156,10 @@ pub enum Categories {
     Text(TextCategories),
     /// A Scripting Trait declaration, traits are unique, and are used to describe how Shards work (Scripts)
     /// Name, Description, and unique trait ID
-    Trait(String, String, ShardsTrait),
+    Trait(ShardsTraitInfo),
     /// Shards scripts of various sub-categories
     /// Shards use interoperability traits to describe how they can be used in other shards
-    Shards(ShardsFormat, Vec<ShardsTrait>),
+    Shards(ShardsScriptInfo),
     /// Audio files and effects
     Audio(AudioCategories),
     /// Textures of the supported sub-categories
