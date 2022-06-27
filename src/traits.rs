@@ -15,7 +15,16 @@ pub enum CodeType {
     Wire,
 }
 
-#[derive(Encode, Decode, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
+#[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
+pub struct CodeInfo {
+    pub kind: CodeType,
+    pub requires: Vec<(String, VariableType)>,
+    pub exposes: Vec<(String, VariableType)>,
+    pub inputs: Vec<VariableType>,
+    pub output: VariableType,
+}
+
+#[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
 pub enum VariableType {
     None,
     Any,
@@ -42,22 +51,13 @@ pub enum VariableType {
     /// VendorID, TypeID
     Object(u32, u32),
     Audio,
-}
-
-#[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
-pub struct CodeInfo {
-    pub kind: CodeType,
-    pub requires: Vec<(String, VariableType)>,
-    pub exposes: Vec<(String, VariableType)>,
-    pub inputs: Vec<VariableType>,
-    pub output: VariableType,
+    Code(Box<CodeInfo>),
 }
 
 #[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
 pub enum TraitInfo {
     SingleType(VariableType),
     MultipleTypes(Vec<VariableType>),
-    Code(CodeInfo),
 }
 
 pub type Traits = Vec<(String, TraitInfo)>;
@@ -79,5 +79,38 @@ mod tests {
         let d_trait1 = Traits::decode(&mut e_trait1.as_slice()).unwrap();
 
         assert!(trait1 == d_trait1);
+    }
+
+    #[test]
+    fn encode_decode_boxed_1() {
+        let mut trait1 = vec![
+            ("int1".to_string(), TraitInfo::SingleType(VariableType::Int)),
+            (
+                "boxed1".to_string(),
+                TraitInfo::SingleType(VariableType::Code(Box::new(CodeInfo {
+                    kind: CodeType::Wire,
+                    requires: vec![("int1".to_string(), VariableType::Int)],
+                    exposes: vec![],
+                    inputs: vec![],
+                    output: VariableType::None,
+                }))),
+            ),
+        ];
+
+        // THIS IS the way we reprocess the trait declaration before sorting it on chain and hashing it
+        trait1.dedup_by(|a, b| a.0.to_lowercase() == b.0.to_lowercase());
+        trait1.sort_by(|a, b| a.0.to_lowercase().cmp(&b.0.to_lowercase()));
+
+        let e_trait1 = trait1.encode();
+
+        let d_trait1 = Traits::decode(&mut e_trait1.as_slice()).unwrap();
+
+        assert!(trait1 == d_trait1);
+        assert!(d_trait1[0].0 == "boxed1".to_string());
+        let requires = match d_trait1[0].1 {
+            TraitInfo::SingleType(VariableType::Code(ref code)) => code.requires.clone(),
+            _ => panic!("Expected a code"),
+        };
+        assert!(requires[0].0 == "int1".to_string());
     }
 }
