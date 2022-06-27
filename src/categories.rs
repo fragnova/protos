@@ -1,4 +1,4 @@
-use parity_scale_codec::{Compact, Decode, Encode};
+use parity_scale_codec::{Decode, Encode};
 use scale_info::prelude::vec::Vec;
 
 #[cfg(not(feature = "std"))]
@@ -7,13 +7,14 @@ type String = Vec<u8>;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
+/// A xxHash128 hash of the trait interface.
 #[derive(Encode, Decode, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
 #[cfg_attr(
     feature = "std",
     derive(Serialize, Deserialize),
     serde(rename_all = "camelCase")
 )]
-pub struct ShardsTrait(Compact<u64>);
+pub struct ShardsTrait([u8; 16]);
 
 #[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
 #[cfg_attr(

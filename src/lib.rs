@@ -2,3 +2,4 @@
 
 pub mod categories;
 pub mod permissions;
+pub mod traits;
