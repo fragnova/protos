@@ -48,6 +48,9 @@ E.g.
 **TODO**
 We need to validate that `deftrait` and the defined items actually follow 1:1 the `trait` specification.
 
+#### Remarks
+If a trait definition is contained in a pure **Shards** `Table` it could be implemented in any supported language other than Shards Script such as C or Rust. **This is not the case for now, we will see if it should be. For now the definition is in Shards Script EDN, this has greater flexibility.**
+
 ## More concrete examples
 ### A weapon
 #### Damaging trait
