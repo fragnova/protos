@@ -25,6 +25,14 @@ pub struct CodeInfo {
 }
 
 #[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
+pub struct TableInfo {
+    /// Tha name of the keys, an empty key represent any name, allowing multiple instances of the corresponding index type
+    pub keys: Vec<String>,
+    /// Following keys array (should be same len), the types expected
+    pub types: Vec<Vec<VariableType>>,
+}
+
+#[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
 pub enum VariableType {
     None,
     Any,
@@ -46,8 +54,8 @@ pub enum VariableType {
     Bytes,
     String,
     Image,
-    Seq,
-    Table,
+    Seq(Vec<VariableType>),
+    Table(TableInfo),
     /// VendorID, TypeID
     Object(u32, u32),
     Audio,
