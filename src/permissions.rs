@@ -18,14 +18,14 @@ mod tests {
     use super::*;
 
     struct TestStruct {
-        pub name: String,
+        pub _name: String,
         pub permissions: FragmentPerms,
     }
 
     #[test]
     fn t1() {
         let test_struct = TestStruct {
-            name: "test".to_string(),
+            _name: "test".to_string(),
             permissions: FragmentPerms::NONE,
         };
 
