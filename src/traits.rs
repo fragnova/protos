@@ -37,7 +37,7 @@ pub enum VariableType {
     None,
     Any,
     /// VendorID, TypeID
-    Enum(u32, u32),
+    Enum{vendor_id: u32, type_id: u32},
     Bool,
     Int,    // A 64bits int
     Int2,   // A vector of 2 64bits ints
@@ -57,9 +57,10 @@ pub enum VariableType {
     Seq(Vec<VariableType>),
     Table(TableInfo),
     /// VendorID, TypeID
-    Object(u32, u32),
+    Object{vendor_id: u32, type_id: u32},
     Audio,
     Code(Box<CodeInfo>),
+    Mesh{name: String},
 }
 
 #[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
