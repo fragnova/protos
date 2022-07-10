@@ -8,11 +8,18 @@ use scale_info::prelude::vec::Vec;
 type String = Vec<u8>;
 
 #[derive(Encode, Decode, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
+pub enum TriState {
+    Either,
+    True,
+    False,
+}
+
+#[derive(Encode, Decode, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
 pub enum CodeType {
     /// A list of shards, to be injected into more complex blocks of code or wires
     Shards,
     /// An actual wire
-    Wire,
+    Wire { looped: TriState },
 }
 
 #[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
@@ -37,7 +44,10 @@ pub enum VariableType {
     None,
     Any,
     /// VendorID, TypeID
-    Enum{vendor_id: u32, type_id: u32},
+    Enum {
+        vendor_id: u32,
+        type_id: u32,
+    },
     Bool,
     Int,    // A 64bits int
     Int2,   // A vector of 2 64bits ints
@@ -57,10 +67,15 @@ pub enum VariableType {
     Seq(Vec<VariableType>),
     Table(TableInfo),
     /// VendorID, TypeID
-    Object{vendor_id: u32, type_id: u32},
+    Object {
+        vendor_id: u32,
+        type_id: u32,
+    },
     Audio,
     Code(Box<CodeInfo>),
-    Mesh{name: String},
+    Mesh {
+        name: String,
+    },
 }
 
 #[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
@@ -97,7 +112,9 @@ mod tests {
             (
                 "boxed1".to_string(),
                 TraitInfo::SingleType(VariableType::Code(Box::new(CodeInfo {
-                    kind: CodeType::Wire,
+                    kind: CodeType::Wire {
+                        looped: TriState::Either,
+                    },
                     requires: vec![("int1".to_string(), VariableType::Int)],
                     exposes: vec![],
                     inputs: vec![],
