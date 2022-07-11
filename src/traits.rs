@@ -76,6 +76,7 @@ pub enum VariableType {
     Mesh {
         name: String,
     },
+    Channel(Box<VariableType>),
 }
 
 #[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
