@@ -1,5 +1,5 @@
 use parity_scale_codec::{Decode, Encode};
-use scale_info::prelude::vec::Vec;
+use scale_info::prelude::{vec::Vec, boxed::Box};
 
 // For more info refer to:
 // https://github.com/fragcolor-xyz/shards/blob/devel/include/shards.h
