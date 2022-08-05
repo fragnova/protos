@@ -1,5 +1,5 @@
 use parity_scale_codec::{Decode, Encode};
-use scale_info::prelude::{vec::Vec, boxed::Box};
+use scale_info::prelude::{boxed::Box, vec::Vec};
 
 // For more info refer to:
 // https://github.com/fragcolor-xyz/shards/blob/devel/include/shards.h
@@ -80,12 +80,16 @@ pub enum VariableType {
 }
 
 #[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
-pub enum TraitInfo {
+pub enum RecordInfo {
     SingleType(VariableType),
     MultipleTypes(Vec<VariableType>),
 }
 
-pub type Traits = Vec<(String, TraitInfo)>;
+#[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
+pub struct Trait {
+    pub name: String,
+    pub records: Vec<(String, RecordInfo)>,
+}
 
 #[cfg(test)]
 mod tests {
@@ -93,15 +97,27 @@ mod tests {
 
     #[test]
     fn encode_decode_simple_1() {
-        let mut trait1 = vec![("int1".to_string(), TraitInfo::SingleType(VariableType::Int))];
+        let mut trait1 = vec![(
+            "int1".to_string(),
+            RecordInfo::SingleType(VariableType::Int),
+        )];
 
         // THIS IS the way we reprocess the trait declaration before sorting it on chain and hashing it
-        trait1.dedup_by(|a, b| a.0.to_lowercase() == b.0.to_lowercase());
-        trait1.sort_by(|a, b| a.0.to_lowercase().cmp(&b.0.to_lowercase()));
+        trait1 = trait1
+            .into_iter()
+            .map(|(name, info)| (name.to_lowercase(), info))
+            .collect();
+        trait1.dedup_by(|a, b| a.0 == b.0);
+        trait1.sort_by(|a, b| a.0.cmp(&b.0));
+
+        let trait1 = Trait {
+            name: "Trait1".to_string(),
+            records: trait1,
+        };
 
         let e_trait1 = trait1.encode();
 
-        let d_trait1 = Traits::decode(&mut e_trait1.as_slice()).unwrap();
+        let d_trait1 = Trait::decode(&mut e_trait1.as_slice()).unwrap();
 
         assert!(trait1 == d_trait1);
     }
@@ -109,10 +125,13 @@ mod tests {
     #[test]
     fn encode_decode_boxed_1() {
         let mut trait1 = vec![
-            ("int1".to_string(), TraitInfo::SingleType(VariableType::Int)),
+            (
+                "int1".to_string(),
+                RecordInfo::SingleType(VariableType::Int),
+            ),
             (
                 "boxed1".to_string(),
-                TraitInfo::SingleType(VariableType::Code(Box::new(CodeInfo {
+                RecordInfo::SingleType(VariableType::Code(Box::new(CodeInfo {
                     kind: CodeType::Wire {
                         looped: TriState::Either,
                     },
@@ -125,17 +144,26 @@ mod tests {
         ];
 
         // THIS IS the way we reprocess the trait declaration before sorting it on chain and hashing it
-        trait1.dedup_by(|a, b| a.0.to_lowercase() == b.0.to_lowercase());
-        trait1.sort_by(|a, b| a.0.to_lowercase().cmp(&b.0.to_lowercase()));
+        trait1 = trait1
+            .into_iter()
+            .map(|(name, info)| (name.to_lowercase(), info))
+            .collect();
+        trait1.dedup_by(|a, b| a.0 == b.0);
+        trait1.sort_by(|a, b| a.0.cmp(&b.0));
+
+        let trait1 = Trait {
+            name: "Trait1".to_string(),
+            records: trait1,
+        };
 
         let e_trait1 = trait1.encode();
 
-        let d_trait1 = Traits::decode(&mut e_trait1.as_slice()).unwrap();
+        let d_trait1 = Trait::decode(&mut e_trait1.as_slice()).unwrap();
 
         assert!(trait1 == d_trait1);
-        assert!(d_trait1[0].0 == "boxed1".to_string());
-        let requires = match d_trait1[0].1 {
-            TraitInfo::SingleType(VariableType::Code(ref code)) => code.requires.clone(),
+        assert!(d_trait1.records[0].0 == "boxed1".to_string());
+        let requires = match d_trait1.records[0].1 {
+            RecordInfo::SingleType(VariableType::Code(ref code)) => code.requires.clone(),
             _ => panic!("Expected a code"),
         };
         assert!(requires[0].0 == "int1".to_string());

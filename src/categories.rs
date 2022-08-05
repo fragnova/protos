@@ -10,18 +10,6 @@ use serde::{Deserialize, Serialize};
 /// A Blake2_128 hash of the trait interface.
 pub type ShardsTrait = [u8; 16];
 
-#[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
-#[cfg_attr(
-    feature = "std",
-    derive(Serialize, Deserialize),
-    serde(rename_all = "camelCase")
-)]
-pub struct ShardsTraitInfo {
-    pub name: String,
-    pub description: String,
-    pub id: ShardsTrait,
-}
-
 #[derive(Encode, Decode, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
 #[cfg_attr(
     feature = "std",
@@ -151,7 +139,8 @@ pub enum Categories {
     Text(TextCategories),
     /// A Scripting Trait declaration, traits are unique, and are used to describe how Shards work (Scripts)
     /// Name, Description, and unique trait ID
-    Trait(ShardsTraitInfo),
+    /// None is meant to be used in Fragnova protos when uploading and RPCs mainly.
+    Trait(Option<ShardsTrait>),
     /// Shards scripts of various sub-categories
     /// Shards use interoperability traits to describe how they can be used in other shards
     Shards(ShardsScriptInfo),
