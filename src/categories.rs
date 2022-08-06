@@ -7,8 +7,8 @@ type String = Vec<u8>;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-/// A Blake2_128 hash of the trait interface.
-pub type ShardsTrait = [u8; 16];
+/// A XX64 hash of the trait interface.
+pub type ShardsTrait = [u8; 8];
 
 #[derive(Encode, Decode, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
 #[cfg_attr(
