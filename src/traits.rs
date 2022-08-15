@@ -80,9 +80,16 @@ pub enum VariableType {
 }
 
 #[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
+pub struct VariableTypeInfo {
+    pub type_: VariableType,
+    /// Raw bytes representation of the default value for the type
+    pub default: Option<Vec<u8>>,
+}
+
+#[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
 pub enum RecordInfo {
-    SingleType(VariableType),
-    MultipleTypes(Vec<VariableType>),
+    SingleType(VariableTypeInfo),
+    MultipleTypes(Vec<VariableTypeInfo>),
 }
 
 #[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
@@ -99,7 +106,10 @@ mod tests {
     fn encode_decode_simple_1() {
         let mut trait1 = vec![(
             "int1".to_string(),
-            RecordInfo::SingleType(VariableType::Int),
+            RecordInfo::SingleType(VariableTypeInfo {
+                type_: VariableType::Int,
+                default: None,
+            }),
         )];
 
         // THIS IS the way we reprocess the trait declaration before sorting it on chain and hashing it
@@ -127,19 +137,25 @@ mod tests {
         let mut trait1 = vec![
             (
                 "int1".to_string(),
-                RecordInfo::SingleType(VariableType::Int),
+                RecordInfo::SingleType(VariableTypeInfo {
+                    type_: VariableType::Int,
+                    default: None,
+                }),
             ),
             (
                 "boxed1".to_string(),
-                RecordInfo::SingleType(VariableType::Code(Box::new(CodeInfo {
-                    kind: CodeType::Wire {
-                        looped: TriState::Either,
-                    },
-                    requires: vec![("int1".to_string(), VariableType::Int)],
-                    exposes: vec![],
-                    inputs: vec![],
-                    output: VariableType::None,
-                }))),
+                RecordInfo::SingleType(VariableTypeInfo {
+                    type_: VariableType::Code(Box::new(CodeInfo {
+                        kind: CodeType::Wire {
+                            looped: TriState::Either,
+                        },
+                        requires: vec![("int1".to_string(), VariableType::Int)],
+                        exposes: vec![],
+                        inputs: vec![],
+                        output: VariableType::None,
+                    })),
+                    default: None,
+                }),
             ),
         ];
 
@@ -163,7 +179,10 @@ mod tests {
         assert!(trait1 == d_trait1);
         assert!(d_trait1.records[0].0 == "boxed1".to_string());
         let requires = match d_trait1.records[0].1 {
-            RecordInfo::SingleType(VariableType::Code(ref code)) => code.requires.clone(),
+            RecordInfo::SingleType(VariableTypeInfo {
+                type_: VariableType::Code(ref code),
+                default: None,
+            }) => code.requires.clone(),
             _ => panic!("Expected a code"),
         };
         assert!(requires[0].0 == "int1".to_string());
