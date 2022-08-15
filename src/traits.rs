@@ -73,9 +73,7 @@ pub enum VariableType {
     },
     Audio,
     Code(Box<CodeInfo>),
-    Mesh {
-        name: String,
-    },
+    Mesh,
     Channel(Box<VariableType>),
 }
 
