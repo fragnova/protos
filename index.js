@@ -67,6 +67,7 @@ module.exports = {
                     "wasmProgram",
                     "wasmReactor",
                     "blendFile",
+                    "onnxModel",
                 ]
             },
 
@@ -115,4 +116,3 @@ module.exports = {
             }
         }
     };
-    
