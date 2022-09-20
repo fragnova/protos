@@ -111,6 +111,7 @@ module.exports = {
                 categories: 'Vec<Categories>',
                 tags: 'Vec<String>',
                 available: 'Option<bool>',
+                exclude_tags: 'bool',
             }
         }
     };
