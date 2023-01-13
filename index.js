@@ -68,6 +68,7 @@ module.exports = {
                     "wasmReactor",
                     "blendFile",
                     "onnxModel",
+                    "safeTensors",
                 ]
             },
 
