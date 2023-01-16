@@ -1,6 +1,6 @@
 {
     "name": "@fragcolor/protos",
-    "description": "This package contains a single JavaScript object which contains information about the RPC methods and Custom Types of the Fragnova Blockchain,
+    "description": "This package contains a single JavaScript object which contains information about the RPC methods and Custom Types of the Fragnova Blockchain",
     "version": "0.0.7"
 }
 
