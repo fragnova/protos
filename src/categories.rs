@@ -125,8 +125,10 @@ pub enum BinaryCategories {
     WasmReactor,
     /// A blender file. Royalties distribution of blender files derived protos will always allocate a % to the Blender Foundation
     BlendFile,
-    /// An ONNX AI model in its binary format
-    OnnxModel
+    /// An ONNX ML model in its binary format
+    OnnxModel,
+    /// A safetensors ML model as from https://github.com/huggingface/safetensors
+    SafeTensors,
 }
 
 /// Types of categories that can be attached to a Proto-Fragment to describe it (e.g Code, Audio, Video etc.)

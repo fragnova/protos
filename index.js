@@ -96,6 +96,8 @@ module.exports = {
                 "wasmProgram",
                 "wasmReactor",
                 "blendFile",
+                "onnxModel",
+                "safeTensors",
             ]
         },
         ShardsScriptInfo: {
