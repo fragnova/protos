@@ -115,7 +115,7 @@ pub enum VariableType {
 #[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
 pub struct VariableTypeInfo {
     /// The variable type
-    #[serde(alias = "type")]
+    #[cfg_attr(feature = "std", serde(alias = "type"))]
     pub type_: VariableType,
     /// Raw-bytes representation of the default value of the variable type (optional)
     pub default: Option<Vec<u8>>,
