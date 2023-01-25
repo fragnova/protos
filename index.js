@@ -88,7 +88,8 @@ module.exports = {
         TextCategories: {
             _enum: [
                 "plain",
-                "json"
+                "json",
+                "wgsl"
             ]
         },
         BinaryCategories: {
@@ -97,7 +98,7 @@ module.exports = {
                 "wasmReactor",
                 "blendFile",
                 "onnxModel",
-                "safeTensors",
+                "safeTensors"
             ]
         },
         ShardsScriptInfo: {

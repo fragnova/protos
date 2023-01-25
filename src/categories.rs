@@ -110,6 +110,8 @@ pub enum TextCategories {
     Plain,
     /// Json String
     Json,
+    /// WebGPU shader code
+    Wgsl,
 }
 
 #[derive(Encode, Decode, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
