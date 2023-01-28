@@ -10,13 +10,11 @@ use serde::{Deserialize, Serialize};
 #[cfg(not(feature = "std"))]
 type String = Vec<u8>;
 
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(Encode, Decode, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
-pub enum TriState {
-    Either,
-    True,
-    False,
-}
+/// 256 bytes u8-Array
+pub type Hash256 = [u8; 32];
+
+/// 128 bytes u8-Array
+pub type Hash128 = [u8; 16];
 
 /// Enum that represents the Code Type.
 ///
@@ -29,7 +27,7 @@ pub enum CodeType {
     /// A list of shards, to be injected into more complex blocks of code or wires
     Shards,
     /// An actual wire
-    Wire { looped: TriState },
+    Wire { looped: Option<bool> },
 }
 
 /// Struct represents the information about a Code (Note: There are only 2 Code Types: A Shard or a Wire. See the enum `CodeType` above to understand more)
@@ -108,6 +106,8 @@ pub enum VariableType {
     Code(Box<CodeInfo>),
     Mesh,
     Channel(Box<VariableType>),
+    Proto(Hash256),
+    Fragment(Hash128, u64, u64),
 }
 
 /// Struct contains information about a variable type
@@ -121,15 +121,6 @@ pub struct VariableTypeInfo {
     pub default: Option<Vec<u8>>,
 }
 
-/// TODO Review - Definition
-/// A Trait Attribute's Type
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
-pub enum RecordInfo {
-    SingleType(VariableTypeInfo),
-    MultipleTypes(Vec<VariableTypeInfo>),
-}
-
 /// Struct represents a Trait
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
@@ -137,7 +128,7 @@ pub struct Trait {
     /// Name of the Trait
     pub name: String,
     /// List of attributes of the Trait. An attribute is represented as a **tuple that contains the attribute's name and the attribute's type**.
-    pub records: Vec<(String, RecordInfo)>,
+    pub records: Vec<(String, Vec<VariableTypeInfo>)>,
 }
 
 #[cfg(test)]
@@ -148,10 +139,10 @@ mod tests {
     fn encode_decode_simple_1() {
         let mut trait1 = vec![(
             "int1".to_string(),
-            RecordInfo::SingleType(VariableTypeInfo {
+            vec![VariableTypeInfo {
                 type_: VariableType::Int,
                 default: None,
-            }),
+            }],
         )];
 
         // THIS IS the way we reprocess the trait declaration before sorting it on chain and hashing it
@@ -180,17 +171,17 @@ mod tests {
         let mut trait1 = vec![
             (
                 "int1".to_string(),
-                RecordInfo::SingleType(VariableTypeInfo {
+                vec![VariableTypeInfo {
                     type_: VariableType::Int,
                     default: None,
-                }),
+                }],
             ),
             (
                 "boxed1".to_string(),
-                RecordInfo::SingleType(VariableTypeInfo {
+                vec![VariableTypeInfo {
                     type_: VariableType::Code(Box::new(CodeInfo {
                         kind: CodeType::Wire {
-                            looped: TriState::Either,
+                            looped: None,
                         },
                         requires: vec![("int1".to_string(), VariableType::Int)],
                         exposes: vec![],
@@ -198,7 +189,7 @@ mod tests {
                         output: VariableType::None,
                     })),
                     default: None,
-                }),
+                }],
             ),
         ];
 
@@ -264,6 +255,68 @@ mod tests {
     }
 
     #[test]
+    fn test_json_simple_2() {
+        let mut trait2 = vec![(
+            "string1".to_string(),
+            RecordInfo::SingleType(VariableTypeInfo {
+                type_: VariableType::String,
+                default: None,
+            }),
+        )];
+
+        trait2 = trait2
+            .into_iter()
+            .map(|(name, info)| (name.to_lowercase(), info))
+            .collect();
+        trait2.dedup_by(|a, b| a.0 == b.0);
+        trait2.sort_by(|a, b| a.0.cmp(&b.0));
+
+        let trait2 = Trait {
+            name: "Trait2".to_string(),
+            records: trait2,
+        };
+
+        let json_trait2 = serde_json::to_string(&trait2).unwrap();
+
+        println!("json_trait2: {}", json_trait2);
+
+        let d_trait2 = serde_json::from_str(&json_trait2).unwrap();
+
+        assert!(trait2 == d_trait2);
+    }
+
+    #[test]
+    fn test_json_simple_3() {
+        let mut trait3 = vec![(
+            "bool1".to_string(),
+            RecordInfo::SingleType(VariableTypeInfo {
+                type_: VariableType::Bool,
+                default: None,
+            }),
+        )];
+
+        trait3 = trait3
+            .into_iter()
+            .map(|(name, info)| (name.to_lowercase(), info))
+            .collect();
+        trait3.dedup_by(|a, b| a.0 == b.0);
+        trait3.sort_by(|a, b| a.0.cmp(&b.0));
+
+        let trait3 = Trait {
+            name: "Trait3".to_string(),
+            records: trait3,
+        };
+
+        let json_trait3 = serde_json::to_string(&trait3).unwrap();
+
+        println!("json_trait3: {}", json_trait3);
+
+        let d_trait3 = serde_json::from_str(&json_trait3).unwrap();
+
+        assert!(trait3 == d_trait3);
+    }
+
+    #[test]
     fn test_json_boxed_1() {
         let mut trait1 = vec![
             (
@@ -278,7 +331,7 @@ mod tests {
                 RecordInfo::SingleType(VariableTypeInfo {
                     type_: VariableType::Code(Box::new(CodeInfo {
                         kind: CodeType::Wire {
-                            looped: TriState::Either,
+                            looped: None,
                         },
                         requires: vec![("int1".to_string(), VariableType::Int)],
                         exposes: vec![],
