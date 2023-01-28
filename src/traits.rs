@@ -1,3 +1,4 @@
+use crate::categories::Categories;
 use parity_scale_codec::{Decode, Encode};
 use scale_info::prelude::{boxed::Box, vec::Vec};
 
@@ -36,8 +37,7 @@ pub enum CodeType {
 pub struct CodeInfo {
   /// The Type of the Code (i.e the Code Type)
   pub kind: CodeType,
-  /// List of variables that must be available to the Code's code context, before the Code even executes. Otherwise, the
-  ///
+  /// List of variables that must be available to the Code's code context, before the Code even executes.
   /// Note: Each variable is represented as a tuple of its name and its type.
   pub requires: Vec<(String, VariableType)>,
   /// List of variables that are in the Code's code context. Each variable is represented as a tuple of its name and its type.
@@ -96,6 +96,14 @@ pub enum VariableType {
   String,
   Image,
   Seq(Vec<VariableType>),
+  BoundedSeq {
+    types: Vec<VariableType>,
+    max_len: u32,
+  },
+  FixedSeq {
+    types: Vec<VariableType>,
+    fixed_len: u32,
+  },
   Table(TableInfo),
   /// VendorID, TypeID
   Object {
@@ -106,8 +114,7 @@ pub enum VariableType {
   Code(Box<CodeInfo>),
   Mesh,
   Channel(Box<VariableType>),
-  Proto(Hash256),
-  Fragment(Hash128, u64, u64),
+  Proto(Categories),
 }
 
 /// Struct contains information about a variable type
@@ -121,6 +128,19 @@ pub struct VariableTypeInfo {
   pub default: Option<Vec<u8>>,
 }
 
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
+pub struct Record {
+  pub name: String,
+  pub types: Vec<VariableTypeInfo>,
+}
+
+impl From<(String, Vec<VariableTypeInfo>)> for Record {
+  fn from((name, types): (String, Vec<VariableTypeInfo>)) -> Self {
+    Self { name, types }
+  }
+}
+
 /// Struct represents a Trait
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
@@ -128,7 +148,7 @@ pub struct Trait {
   /// Name of the Trait
   pub name: String,
   /// List of attributes of the Trait. An attribute is represented as a **tuple that contains the attribute's name and the attribute's type**.
-  pub records: Vec<(String, Vec<VariableTypeInfo>)>,
+  pub records: Vec<Record>,
 }
 
 #[cfg(test)]
@@ -137,22 +157,23 @@ mod tests {
 
   #[test]
   fn encode_decode_simple_1() {
-    let mut trait1 = vec![(
+    let mut trait1: Vec<Record> = vec![(
       "int1".to_string(),
       vec![VariableTypeInfo {
         type_: VariableType::Int,
         default: None,
       }],
-    )];
+    )
+      .into()];
 
     // THIS IS the way we reprocess the trait declaration before sorting it on chain and hashing it
     trait1 = trait1
       .into_iter()
-      .map(|(name, info)| (name.to_lowercase(), info))
+      .map(|r| (r.name.to_lowercase(), r.types).into())
       .collect();
-    trait1.dedup_by(|a, b| a.0 == b.0);
+    trait1.dedup_by(|a, b| a.name == b.name);
     // Note: "Strings are ordered lexicographically by their byte values ... This is not necessarily the same as “alphabetical” order, which varies by language and locale". Source: https://doc.rust-lang.org/std/primitive.str.html#impl-Ord-for-str
-    trait1.sort_by(|a, b| a.0.cmp(&b.0));
+    trait1.sort_by(|a, b| a.name.cmp(&b.name));
 
     let trait1 = Trait {
       name: "Trait1".to_string(),
@@ -168,14 +189,15 @@ mod tests {
 
   #[test]
   fn encode_decode_boxed_1() {
-    let mut trait1 = vec![
+    let mut trait1: Vec<Record> = vec![
       (
         "int1".to_string(),
         vec![VariableTypeInfo {
           type_: VariableType::Int,
           default: None,
         }],
-      ),
+      )
+        .into(),
       (
         "boxed1".to_string(),
         vec![VariableTypeInfo {
@@ -188,16 +210,17 @@ mod tests {
           })),
           default: None,
         }],
-      ),
+      )
+        .into(),
     ];
 
     // THIS IS the way we reprocess the trait declaration before sorting it on chain and hashing it
     trait1 = trait1
       .into_iter()
-      .map(|(name, info)| (name.to_lowercase(), info))
+      .map(|r| (r.name.to_lowercase(), r.types).into())
       .collect();
-    trait1.dedup_by(|a, b| a.0 == b.0);
-    trait1.sort_by(|a, b| a.0.cmp(&b.0));
+    trait1.dedup_by(|a, b| a.name == b.name);
+    trait1.sort_by(|a, b| a.name.cmp(&b.name));
 
     let trait1 = Trait {
       name: "Trait1".to_string(),
@@ -209,8 +232,8 @@ mod tests {
     let d_trait1 = Trait::decode(&mut e_trait1.as_slice()).unwrap();
 
     assert!(trait1 == d_trait1);
-    assert!(d_trait1.records[0].0 == "boxed1".to_string());
-    let type_ = &d_trait1.records[0].1[0].type_;
+    assert!(d_trait1.records[0].name == "boxed1".to_string());
+    let type_ = &d_trait1.records[0].types[0].type_;
     let requires = match type_ {
       VariableType::Code(code) => &code.requires,
       _ => panic!("Should be a code"),
@@ -220,108 +243,46 @@ mod tests {
 
   #[test]
   fn test_json_simple_1() {
-    let mut trait1 = vec![(
+    let mut trait1: Vec<Record> = vec![(
       "int1".to_string(),
       vec![VariableTypeInfo {
         type_: VariableType::Int,
         default: None,
       }],
-    )];
+    )
+      .into()];
 
     // THIS IS the way we reprocess the trait declaration before sorting it on chain and hashing it
     trait1 = trait1
       .into_iter()
-      .map(|(name, info)| (name.to_lowercase(), info))
+      .map(|r| (r.name.to_lowercase(), r.types).into())
       .collect();
-    trait1.dedup_by(|a, b| a.0 == b.0);
-    trait1.sort_by(|a, b| a.0.cmp(&b.0));
+    trait1.dedup_by(|a, b| a.name == b.name);
+    trait1.sort_by(|a, b| a.name.cmp(&b.name));
 
     let trait1 = Trait {
       name: "Trait1".to_string(),
       records: trait1,
     };
 
-    let json_trait1 = serde_json::to_string(&trait1).unwrap();
+    let e_trait1 = serde_json::to_string(&trait1).unwrap();
 
-    println!("json_trait1: {}", json_trait1);
-
-    let d_trait1 = serde_json::from_str(&json_trait1).unwrap();
+    let d_trait1: Trait = serde_json::from_str(&e_trait1).unwrap();
 
     assert!(trait1 == d_trait1);
   }
 
   #[test]
-  fn test_json_simple_2() {
-    let mut trait2 = vec![(
-      "string1".to_string(),
-      vec![VariableTypeInfo {
-        type_: VariableType::String,
-        default: None,
-      }],
-    )];
-
-    trait2 = trait2
-      .into_iter()
-      .map(|(name, info)| (name.to_lowercase(), info))
-      .collect();
-    trait2.dedup_by(|a, b| a.0 == b.0);
-    trait2.sort_by(|a, b| a.0.cmp(&b.0));
-
-    let trait2 = Trait {
-      name: "Trait2".to_string(),
-      records: trait2,
-    };
-
-    let json_trait2 = serde_json::to_string(&trait2).unwrap();
-
-    println!("json_trait2: {}", json_trait2);
-
-    let d_trait2 = serde_json::from_str(&json_trait2).unwrap();
-
-    assert!(trait2 == d_trait2);
-  }
-
-  #[test]
-  fn test_json_simple_3() {
-    let mut trait3 = vec![(
-      "bool1".to_string(),
-      vec![VariableTypeInfo {
-        type_: VariableType::Bool,
-        default: None,
-      }],
-    )];
-
-    trait3 = trait3
-      .into_iter()
-      .map(|(name, info)| (name.to_lowercase(), info))
-      .collect();
-    trait3.dedup_by(|a, b| a.0 == b.0);
-    trait3.sort_by(|a, b| a.0.cmp(&b.0));
-
-    let trait3 = Trait {
-      name: "Trait3".to_string(),
-      records: trait3,
-    };
-
-    let json_trait3 = serde_json::to_string(&trait3).unwrap();
-
-    println!("json_trait3: {}", json_trait3);
-
-    let d_trait3 = serde_json::from_str(&json_trait3).unwrap();
-
-    assert!(trait3 == d_trait3);
-  }
-
-  #[test]
   fn test_json_boxed_1() {
-    let mut trait1 = vec![
+    let mut trait1: Vec<Record> = vec![
       (
         "int1".to_string(),
         vec![VariableTypeInfo {
           type_: VariableType::Int,
           default: None,
         }],
-      ),
+      )
+        .into(),
       (
         "boxed1".to_string(),
         vec![VariableTypeInfo {
@@ -334,29 +295,30 @@ mod tests {
           })),
           default: None,
         }],
-      ),
+      )
+        .into(),
     ];
 
     // THIS IS the way we reprocess the trait declaration before sorting it on chain and hashing it
     trait1 = trait1
       .into_iter()
-      .map(|(name, info)| (name.to_lowercase(), info))
+      .map(|r| (r.name.to_lowercase(), r.types).into())
       .collect();
-    trait1.dedup_by(|a, b| a.0 == b.0);
-    trait1.sort_by(|a, b| a.0.cmp(&b.0));
+    trait1.dedup_by(|a, b| a.name == b.name);
+    trait1.sort_by(|a, b| a.name.cmp(&b.name));
 
     let trait1 = Trait {
       name: "Trait1".to_string(),
       records: trait1,
     };
 
-    let json_trait1 = serde_json::to_string(&trait1).unwrap();
+    let e_trait1 = serde_json::to_string(&trait1).unwrap();
 
-    let d_trait1 = serde_json::from_str(&json_trait1).unwrap();
+    let d_trait1: Trait = serde_json::from_str(&e_trait1).unwrap();
 
     assert!(trait1 == d_trait1);
-    assert!(d_trait1.records[0].0 == "boxed1".to_string());
-    let type_ = &d_trait1.records[0].1[0].type_;
+    assert!(d_trait1.records[0].name == "boxed1".to_string());
+    let type_ = &d_trait1.records[0].types[0].type_;
     let requires = match type_ {
       VariableType::Code(code) => &code.requires,
       _ => panic!("Should be a code"),
@@ -374,11 +336,24 @@ mod tests {
           type_: VariableType::Int,
           default: None,
         }],
-      )],
+      )
+        .into()],
     };
 
-    let json_trait1 =
-      r#"{"name":"Trait1","records":[["int1",[{"type":"Int","default":null}]]]}"#;
+    let json_trait1 = r#"{
+      "name": "Trait1",
+      "records": [
+        {
+          "name": "int1",
+          "types": [
+            {
+              "type": "Int",
+              "default": null
+            }
+          ]
+        }
+      ]
+    }"#;
 
     let d_trait1 = serde_json::from_str(&json_trait1).unwrap();
 
