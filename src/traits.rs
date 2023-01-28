@@ -1,4 +1,4 @@
-use crate::categories::Categories;
+use crate::categories::{Categories, TextCategories, TextureCategories};
 use parity_scale_codec::{Decode, Encode};
 use scale_info::prelude::{boxed::Box, vec::Vec};
 
@@ -65,7 +65,9 @@ pub enum VariableType {
   Any,
   /// VendorID, TypeID
   Enum {
+    #[codec(compact)]
     vendor_id: u32,
+    #[codec(compact)]
     type_id: u32,
   },
   Bool,
@@ -98,16 +100,20 @@ pub enum VariableType {
   Seq(Vec<VariableType>),
   BoundedSeq {
     types: Vec<VariableType>,
+    #[codec(compact)]
     max_len: u32,
   },
   FixedSeq {
     types: Vec<VariableType>,
+    #[codec(compact)]
     fixed_len: u32,
   },
   Table(TableInfo),
   /// VendorID, TypeID
   Object {
+    #[codec(compact)]
     vendor_id: u32,
+    #[codec(compact)]
     type_id: u32,
   },
   Audio,
@@ -147,6 +153,9 @@ impl From<(String, Vec<VariableTypeInfo>)> for Record {
 pub struct Trait {
   /// Name of the Trait
   pub name: String,
+  /// Revision of the Trait
+  #[codec(compact)]
+  pub revision: u32,
   /// List of attributes of the Trait. An attribute is represented as a **tuple that contains the attribute's name and the attribute's type**.
   pub records: Vec<Record>,
 }
@@ -177,6 +186,7 @@ mod tests {
 
     let trait1 = Trait {
       name: "Trait1".to_string(),
+      revision: 1,
       records: trait1,
     };
 
@@ -224,6 +234,7 @@ mod tests {
 
     let trait1 = Trait {
       name: "Trait1".to_string(),
+      revision: 1,
       records: trait1,
     };
 
@@ -262,6 +273,7 @@ mod tests {
 
     let trait1 = Trait {
       name: "Trait1".to_string(),
+      revision: 1,
       records: trait1,
     };
 
@@ -309,6 +321,7 @@ mod tests {
 
     let trait1 = Trait {
       name: "Trait1".to_string(),
+      revision: 1,
       records: trait1,
     };
 
@@ -330,6 +343,7 @@ mod tests {
   fn test_json_textual_from_str() {
     let trait1 = Trait {
       name: "Trait1".to_string(),
+      revision: 1,
       records: vec![(
         "int1".to_string(),
         vec![VariableTypeInfo {
@@ -342,6 +356,7 @@ mod tests {
 
     let json_trait1 = r#"{
       "name": "Trait1",
+      "revision": 1,
       "records": [
         {
           "name": "int1",
@@ -354,6 +369,79 @@ mod tests {
         }
       ]
     }"#;
+
+    let d_trait1 = serde_json::from_str(&json_trait1).unwrap();
+
+    assert!(trait1 == d_trait1);
+  }
+
+  #[test]
+  fn test_json_textual_from_str_ambal() {
+    let json_trait1 = r#"{
+      "name": "AmbalLoreFragment",
+      "revision": 1,
+      "records": [
+        {
+          "name": "banner",
+          "types": [
+            {"type": {"Proto": {"texture": "pngFile"}}},
+            {"type": {"Proto": {"texture": "jpgFile"}}},
+            {"type": "Image"}
+          ]
+        },
+        {
+          "name": "content",
+          "types": [
+            {"type": {"Proto": {"text": "plain"}}},
+            {"type": "String"}
+          ]
+        }
+      ]
+    }"#;
+
+    let trait1 = Trait {
+      name: "AmbalLoreFragment".to_string(),
+      revision: 1,
+      records: vec![
+        (
+          "banner".to_string(),
+          vec![
+            VariableTypeInfo {
+              type_: VariableType::Proto(Categories::Texture(TextureCategories::PngFile)),
+              default: None,
+            }
+            .into(),
+            VariableTypeInfo {
+              type_: VariableType::Proto(Categories::Texture(TextureCategories::JpgFile)),
+              default: None,
+            }
+            .into(),
+            VariableTypeInfo {
+              type_: VariableType::Image,
+              default: None,
+            }
+            .into(),
+          ],
+        )
+          .into(),
+        (
+          "content".to_string(),
+          vec![
+            VariableTypeInfo {
+              type_: VariableType::Proto(Categories::Text(TextCategories::Plain)),
+              default: None,
+            }
+            .into(),
+            VariableTypeInfo {
+              type_: VariableType::String,
+              default: None,
+            }
+            .into(),
+          ],
+        )
+          .into(),
+      ],
+    };
 
     let d_trait1 = serde_json::from_str(&json_trait1).unwrap();
 
