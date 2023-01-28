@@ -15,20 +15,20 @@ bitflags! {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+  use super::*;
 
-    struct TestStruct {
-        pub _name: String,
-        pub permissions: FragmentPerms,
-    }
+  struct TestStruct {
+    pub _name: String,
+    pub permissions: FragmentPerms,
+  }
 
-    #[test]
-    fn t1() {
-        let test_struct = TestStruct {
-            _name: "test".to_string(),
-            permissions: FragmentPerms::NONE,
-        };
+  #[test]
+  fn t1() {
+    let test_struct = TestStruct {
+      _name: "test".to_string(),
+      permissions: FragmentPerms::NONE,
+    };
 
-        assert_eq!(test_struct.permissions.bits, 0);
-    }
+    assert_eq!(test_struct.permissions.bits, 0);
+  }
 }
