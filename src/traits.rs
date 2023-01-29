@@ -11,11 +11,17 @@ use serde::{Deserialize, Serialize};
 #[cfg(not(feature = "std"))]
 type String = Vec<u8>;
 
-/// 256 bytes u8-Array
-pub type Hash256 = [u8; 32];
-
-/// 128 bytes u8-Array
-pub type Hash128 = [u8; 16];
+/// Struct representing limits on numbers (such has min and max values)
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
+pub struct Limits<T> {
+  /// The minimum value
+  #[codec(compact)]
+  pub min: T,
+  /// The maximum value
+  #[codec(compact)]
+  pub max: T,
+}
 
 /// Enum that represents the Code Type.
 ///
@@ -72,11 +78,11 @@ pub enum VariableType {
   },
   Bool,
   /// A 64bits int
-  Int,
+  Int(Option<Limits<i64>>),
   /// A vector of 2 64bits ints
-  Int2,
+  Int2(Option<Limits<i64>>, Option<Limits<i64>>),
   /// A vector of 3 32bits ints
-  Int3,
+  Int3(Option<Limits<i32>>, Option<Limits<i32>>, Option<Limits<i32>>),
   /// A vector of 4 32bits ints
   Int4,
   /// A vector of 8 16bits ints
@@ -347,7 +353,7 @@ mod tests {
       records: vec![(
         "int1".to_string(),
         vec![VariableTypeInfo {
-          type_: VariableType::Int,
+          type_: VariableType::Int(None),
           default: None,
         }],
       )
