@@ -1,5 +1,5 @@
-use crate::categories::{Categories, TextCategories, TextureCategories};
-use parity_scale_codec::{Decode, Encode};
+use crate::categories::Categories;
+use parity_scale_codec::{Compact, Decode, Encode, Input, Output};
 use scale_info::prelude::{boxed::Box, vec::Vec};
 
 #[cfg(feature = "std")]
@@ -12,15 +12,45 @@ use serde::{Deserialize, Serialize};
 type String = Vec<u8>;
 
 /// Struct representing limits on numbers (such has min and max values)
+/// Sadly SCALE supports only unsigned integers, so we need to wrap the limits to u64 and unwrap them when decoding.
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
-pub struct Limits<T> {
+#[derive(Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
+pub struct Limits {
   /// The minimum value
-  #[codec(compact)]
-  pub min: T,
+  pub min: i64,
   /// The maximum value
-  #[codec(compact)]
-  pub max: T,
+  pub max: i64,
+  /// Only used when we representing floating point numbers as integers
+  /// The amount of scaling to apply to the fixed point value
+  /// Convert the limit values to float by dividing the fixed point values with 10^scale.
+  /// This allows us to derive a float representation of the limit values with the desired precision.
+  pub scale: u32,
+}
+
+fn wrap_to_u64(x: i64) -> u64 {
+  (x as u64).wrapping_add(u64::MAX / 2 + 1)
+}
+
+fn to_i64(x: u64) -> i64 {
+  ((x as i64) ^ (1 << 63)) & (1 << 63) | (x & (u64::MAX >> 1)) as i64
+}
+
+impl Encode for Limits {
+  fn encode_to<W: Output + ?Sized>(&self, dest: &mut W) {
+    Compact(wrap_to_u64(self.min)).encode_to(dest);
+    Compact(wrap_to_u64(self.max)).encode_to(dest);
+    Compact(self.scale).encode_to(dest);
+  }
+}
+
+impl Decode for Limits {
+  fn decode<I: Input>(input: &mut I) -> Result<Self, parity_scale_codec::Error> {
+    Ok(Self {
+      min: to_i64(Compact::<u64>::decode(input)?.into()),
+      max: to_i64(Compact::<u64>::decode(input)?.into()),
+      scale: Compact::<u32>::decode(input)?.into(),
+    })
+  }
 }
 
 /// Enum that represents the Code Type.
@@ -78,41 +108,34 @@ pub enum VariableType {
   },
   Bool,
   /// A 64bits int
-  Int(Option<Limits<i64>>),
+  Int(Option<Limits>),
   /// A vector of 2 64bits ints
-  Int2(Option<Limits<i64>>, Option<Limits<i64>>),
+  Int2([Option<Limits>; 2]),
   /// A vector of 3 32bits ints
-  Int3(Option<Limits<i32>>, Option<Limits<i32>>, Option<Limits<i32>>),
+  Int3([Option<Limits>; 3]),
   /// A vector of 4 32bits ints
-  Int4,
+  Int4([Option<Limits>; 4]),
   /// A vector of 8 16bits ints
-  Int8,
+  Int8([Option<Limits>; 8]),
   /// A vector of 16 8bits ints
-  Int16,
+  Int16([Option<Limits>; 16]),
   /// A 64bits float
-  Float,
+  Float(Option<Limits>),
   /// A vector of 2 64bits floats
-  Float2,
+  Float2([Option<Limits>; 2]),
   /// A vector of 3 32bits floats
-  Float3,
+  Float3([Option<Limits>; 3]),
   /// A vector of 4 32bits floats
-  Float4,
+  Float4([Option<Limits>; 4]),
   /// A vector of 4 uint8
   Color,
   // Non Blittables
   Bytes,
   String,
   Image,
-  Seq(Vec<VariableType>),
-  BoundedSeq {
+  Seq {
     types: Vec<VariableType>,
-    #[codec(compact)]
-    max_len: u32,
-  },
-  FixedSeq {
-    types: Vec<VariableType>,
-    #[codec(compact)]
-    fixed_len: u32,
+    length_limits: Option<Limits>,
   },
   Table(TableInfo),
   /// VendorID, TypeID
@@ -123,9 +146,10 @@ pub enum VariableType {
     type_id: u32,
   },
   Audio,
-  Code(Box<CodeInfo>),
   Mesh,
+  Code(Box<CodeInfo>),
   Channel(Box<VariableType>),
+  Event(Box<VariableType>),
   Proto(Categories),
 }
 
@@ -169,13 +193,14 @@ pub struct Trait {
 #[cfg(test)]
 mod tests {
   use super::*;
+  use crate::categories::{TextCategories, TextureCategories};
 
   #[test]
   fn encode_decode_simple_1() {
     let mut trait1: Vec<Record> = vec![(
       "int1".to_string(),
       vec![VariableTypeInfo {
-        type_: VariableType::Int,
+        type_: VariableType::Int(None),
         default: None,
       }],
     )
@@ -209,7 +234,7 @@ mod tests {
       (
         "int1".to_string(),
         vec![VariableTypeInfo {
-          type_: VariableType::Int,
+          type_: VariableType::Int(None),
           default: None,
         }],
       )
@@ -219,7 +244,7 @@ mod tests {
         vec![VariableTypeInfo {
           type_: VariableType::Code(Box::new(CodeInfo {
             kind: CodeType::Wire { looped: None },
-            requires: vec![("int1".to_string(), VariableType::Int)],
+            requires: vec![("int1".to_string(), VariableType::Int(None))],
             exposes: vec![],
             inputs: vec![],
             output: VariableType::None,
@@ -263,7 +288,7 @@ mod tests {
     let mut trait1: Vec<Record> = vec![(
       "int1".to_string(),
       vec![VariableTypeInfo {
-        type_: VariableType::Int,
+        type_: VariableType::Int(None),
         default: None,
       }],
     )
@@ -296,7 +321,7 @@ mod tests {
       (
         "int1".to_string(),
         vec![VariableTypeInfo {
-          type_: VariableType::Int,
+          type_: VariableType::Int(None),
           default: None,
         }],
       )
@@ -306,7 +331,7 @@ mod tests {
         vec![VariableTypeInfo {
           type_: VariableType::Code(Box::new(CodeInfo {
             kind: CodeType::Wire { looped: None },
-            requires: vec![("int1".to_string(), VariableType::Int)],
+            requires: vec![("int1".to_string(), VariableType::Int(None))],
             exposes: vec![],
             inputs: vec![],
             output: VariableType::None,
@@ -368,7 +393,7 @@ mod tests {
           "name": "int1",
           "types": [
             {
-              "type": "Int",
+              "type": {"Int": null},
               "default": null
             }
           ]
@@ -452,5 +477,29 @@ mod tests {
     let d_trait1 = serde_json::from_str(&json_trait1).unwrap();
 
     assert!(trait1 == d_trait1);
+  }
+
+  #[test]
+  fn test_limits() {
+    let limits = Limits {
+      min: -100,
+      max: 100,
+      scale: 2,
+    };
+
+    let expected_min = -1.0;
+    let expected_max = 1.0;
+
+    // Convert the limit values to float by dividing the fixed point values with 10^scale.
+    // This allows us to derive a float representation of the limit values with the desired precision.
+    let float_min = limits.min as f64 / 10u64.pow(limits.scale) as f64;
+    let float_max = limits.max as f64 / 10u64.pow(limits.scale) as f64;
+
+    assert_eq!(float_min, expected_min);
+    assert_eq!(float_max, expected_max);
+
+    let encoded = limits.encode();
+    let decoded = Limits::decode(&mut encoded.as_slice()).unwrap();
+    assert!(limits == decoded);
   }
 }
