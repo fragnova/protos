@@ -83,9 +83,12 @@ pub enum TextureCategories {
   serde(rename_all = "camelCase")
 )]
 pub enum VectorCategories {
+  /// A Scalable Vector Graphics file
   SvgFile,
   /// A TrueType font file
   TtfFile,
+  /// A font file in the OpenType format
+  OtfFile,
 }
 
 #[derive(Encode, Decode, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
@@ -95,7 +98,9 @@ pub enum VectorCategories {
   serde(rename_all = "camelCase")
 )]
 pub enum VideoCategories {
+  /// A compressed video file in the mkv container format
   MkvFile,
+  /// A compressed video file in the mp4 container format
   Mp4File,
 }
 

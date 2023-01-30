@@ -1,4 +1,4 @@
-use crate::categories::Categories;
+use crate::categories::{BinaryCategories, TextCategories};
 use parity_scale_codec::{Compact, Decode, Encode, Input, Output};
 use scale_info::prelude::{boxed::Box, vec::Vec};
 
@@ -64,7 +64,10 @@ pub enum CodeType {
   /// A collection of shards that can be injected into more complex blocks of code or wires.
   Shards,
   /// A single wire that can be executed.
-  Wire { looped: Option<bool> },
+  Wire {
+    looped: Option<bool>,
+    pure: Option<bool>,
+  },
 }
 
 /// Struct that represents information about a Code.
@@ -97,7 +100,6 @@ pub struct TableInfo {
   pub types: Vec<Vec<VariableType>>,
 }
 
-
 /// Enum represents all the possible types that a variable can be
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
@@ -111,14 +113,14 @@ pub enum VariableType {
   // Color type (vector of 4 8-bit unsigned integers)
   Color,
   // Binary data type
-  Bytes,
+  Bytes(Option<BinaryCategories>),
   // String type
-  String,
+  String(Option<TextCategories>),
   // Image type
   Image,
   // Audio type
   Audio,
-  // Mesh type
+  // Shards Mesh type
   Mesh,
 
   // Enum type with vendor ID and type ID
@@ -174,8 +176,6 @@ pub enum VariableType {
   Channel(Box<VariableType>),
   // Event type with variable type
   Event(Box<VariableType>),
-  // Proto type with categories
-  Proto(Categories),
 }
 
 /// Struct contains information about a variable type
@@ -218,7 +218,7 @@ pub struct Trait {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::categories::{TextCategories, TextureCategories};
+  use crate::categories::TextCategories;
 
   #[test]
   fn encode_decode_simple_1() {
@@ -268,7 +268,10 @@ mod tests {
         "boxed1".to_string(),
         vec![VariableTypeInfo {
           type_: VariableType::Code(Box::new(CodeInfo {
-            kind: CodeType::Wire { looped: None },
+            kind: CodeType::Wire {
+              looped: None,
+              pure: None,
+            },
             requires: vec![("int1".to_string(), VariableType::Int(None))],
             exposes: vec![],
             inputs: vec![],
@@ -355,7 +358,10 @@ mod tests {
         "boxed1".to_string(),
         vec![VariableTypeInfo {
           type_: VariableType::Code(Box::new(CodeInfo {
-            kind: CodeType::Wire { looped: None },
+            kind: CodeType::Wire {
+              looped: None,
+              pure: None,
+            },
             requires: vec![("int1".to_string(), VariableType::Int(None))],
             exposes: vec![],
             inputs: vec![],
@@ -440,20 +446,19 @@ mod tests {
         {
           "name": "banner",
           "types": [
-            {"type": {"Proto": {"texture": "pngFile"}}},
-            {"type": {"Proto": {"texture": "jpgFile"}}},
             {"type": "Image"}
           ]
         },
         {
           "name": "content",
           "types": [
-            {"type": {"Proto": {"text": "plain"}}},
-            {"type": "String"}
+            {"type": {"String": "markdown"}}
           ]
         }
       ]
     }"#;
+
+    let d_trait1 = serde_json::from_str(&json_trait1).unwrap();
 
     let trait1 = Trait {
       name: "AmbalLoreFragment".to_string(),
@@ -461,45 +466,24 @@ mod tests {
       records: vec![
         (
           "banner".to_string(),
-          vec![
-            VariableTypeInfo {
-              type_: VariableType::Proto(Categories::Texture(TextureCategories::PngFile)),
-              default: None,
-            }
-            .into(),
-            VariableTypeInfo {
-              type_: VariableType::Proto(Categories::Texture(TextureCategories::JpgFile)),
-              default: None,
-            }
-            .into(),
-            VariableTypeInfo {
-              type_: VariableType::Image,
-              default: None,
-            }
-            .into(),
-          ],
+          vec![VariableTypeInfo {
+            type_: VariableType::Image,
+            default: None,
+          }
+          .into()],
         )
           .into(),
         (
           "content".to_string(),
-          vec![
-            VariableTypeInfo {
-              type_: VariableType::Proto(Categories::Text(TextCategories::Plain)),
-              default: None,
-            }
-            .into(),
-            VariableTypeInfo {
-              type_: VariableType::String,
-              default: None,
-            }
-            .into(),
-          ],
+          vec![VariableTypeInfo {
+            type_: VariableType::String(Some(TextCategories::Markdown)),
+            default: None,
+          }
+          .into()],
         )
           .into(),
       ],
     };
-
-    let d_trait1 = serde_json::from_str(&json_trait1).unwrap();
 
     assert!(trait1 == d_trait1);
   }
