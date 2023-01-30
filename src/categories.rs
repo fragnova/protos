@@ -112,6 +112,8 @@ pub enum TextCategories {
   Json,
   /// WebGPU shader code
   Wgsl,
+  /// A markdown file
+  Markdown,
 }
 
 #[derive(Encode, Decode, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
