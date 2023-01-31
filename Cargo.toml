@@ -15,6 +15,9 @@ parity-scale-codec = { version = "3.0", features = ["derive"], default-features 
 serde_json = { version = '1.0.79', default-features = false, features = ['alloc'], optional = true }
 bitflags = "1.3.2"
 
+[dev-dependencies]
+hex = "0.4.3"
+
 [features]
 default = ["std"]
 std = ["serde", "parity-scale-codec/std", "scale-info/std", "serde_json"]
