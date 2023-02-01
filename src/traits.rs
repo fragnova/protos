@@ -208,9 +208,6 @@ impl From<(String, Vec<VariableTypeInfo>)> for Record {
 pub struct Trait {
   /// Name of the Trait
   pub name: String,
-  /// Revision of the Trait
-  #[codec(compact)]
-  pub revision: u32,
   /// List of attributes of the Trait. An attribute is represented as a **tuple that contains the attribute's name and the attribute's type**.
   pub records: Vec<Record>,
 }
@@ -242,7 +239,6 @@ mod tests {
 
     let trait1 = Trait {
       name: "Trait1".to_string(),
-      revision: 1,
       records: trait1,
     };
 
@@ -293,7 +289,6 @@ mod tests {
 
     let trait1 = Trait {
       name: "Trait1".to_string(),
-      revision: 1,
       records: trait1,
     };
 
@@ -332,7 +327,6 @@ mod tests {
 
     let trait1 = Trait {
       name: "Trait1".to_string(),
-      revision: 1,
       records: trait1,
     };
 
@@ -383,7 +377,6 @@ mod tests {
 
     let trait1 = Trait {
       name: "Trait1".to_string(),
-      revision: 1,
       records: trait1,
     };
 
@@ -405,7 +398,6 @@ mod tests {
   fn test_json_textual_from_str() {
     let trait1 = Trait {
       name: "Trait1".to_string(),
-      revision: 1,
       records: vec![(
         "int1".to_string(),
         vec![VariableTypeInfo {
@@ -418,7 +410,6 @@ mod tests {
 
     let json_trait1 = r#"{
       "name": "Trait1",
-      "revision": 1,
       "records": [
         {
           "name": "int1",
@@ -441,7 +432,6 @@ mod tests {
   fn test_json_textual_from_str_ambal() {
     let json_trait1 = r#"{
       "name": "AmbalLoreFragment",
-      "revision": 1,
       "records": [
         {
           "name": "banner",
@@ -462,7 +452,6 @@ mod tests {
 
     let trait1 = Trait {
       name: "AmbalLoreFragment".to_string(),
-      revision: 1,
       records: vec![
         (
           "banner".to_string(),
