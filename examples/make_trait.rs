@@ -1,5 +1,6 @@
 use parity_scale_codec::Encode;
 use protos::traits::Trait;
+use sp_core::twox_64;
 use std::env;
 
 fn main() {
@@ -29,4 +30,6 @@ fn main() {
 
   let binary_trait = t.encode();
   println!("SCALE encoded trait: 0x{}", hex::encode(&binary_trait));
+
+  println!("Trait hash: 0x{}", hex::encode(&twox_64(&binary_trait)));
 }
