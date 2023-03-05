@@ -138,6 +138,8 @@ pub enum BinaryCategories {
   OnnxModel,
   /// A safetensors ML model as from https://github.com/huggingface/safetensors
   SafeTensors,
+  /// A RareForm Engine Domain
+  RareDomain,
 }
 
 /// Types of categories that can be attached to a Proto-Fragment to describe it (e.g Code, Audio, Video etc.)
@@ -151,7 +153,6 @@ pub enum Categories {
   /// Text of the supported sub-categories
   Text(TextCategories),
   /// A Scripting Trait declaration, traits are unique, and are used to describe how Shards work (Scripts)
-  /// Name, Description, and unique trait ID
   /// None is meant to be used in Fragnova protos when uploading and RPCs mainly.
   Trait(Option<ShardsTrait>),
   /// Shards scripts of various sub-categories

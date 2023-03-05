@@ -98,7 +98,8 @@ module.exports = {
                 "wasmReactor",
                 "blendFile",
                 "onnxModel",
-                "safeTensors"
+                "safeTensors",
+                "rareDomain"
             ]
         },
         ShardsScriptInfo: {
