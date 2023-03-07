@@ -170,4 +170,6 @@ pub enum Categories {
   Model(ModelCategories),
   /// Binary of the supported sub-categories
   Binary(BinaryCategories),
+  /// A bundle of many protos
+  Bundle,
 }
