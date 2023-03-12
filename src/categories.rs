@@ -1,4 +1,4 @@
-use parity_scale_codec::{Compact, Decode, Encode};
+use parity_scale_codec::{Decode, Encode};
 use scale_info::prelude::vec::Vec;
 
 #[cfg(not(feature = "std"))]
