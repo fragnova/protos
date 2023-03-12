@@ -1,4 +1,4 @@
-use parity_scale_codec::{Decode, Encode};
+use parity_scale_codec::{Compact, Decode, Encode};
 use scale_info::prelude::vec::Vec;
 
 #[cfg(not(feature = "std"))]
@@ -31,6 +31,8 @@ pub enum ShardsFormat {
 )]
 pub struct ShardsScriptInfo {
   pub format: ShardsFormat,
+  #[codec(compact)]
+  pub shards_version: u32,
   pub requiring: Vec<ShardsTrait>,
   pub implementing: Vec<ShardsTrait>,
 }
