@@ -7,10 +7,12 @@ type String = Vec<u8>;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
+use borsh::{BorshDeserialize, BorshSerialize};
+
 /// A XX64 hash of the trait interface.
 pub type ShardsTrait = [u8; 8];
 
-#[derive(Encode, Decode, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
+#[derive(Encode, Decode, BorshSerialize, BorshDeserialize, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
 #[cfg_attr(
   feature = "std",
   derive(Serialize, Deserialize),
@@ -23,7 +25,7 @@ pub enum ShardsFormat {
   Binary,
 }
 
-#[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
+#[derive(Encode, Decode, BorshSerialize, BorshDeserialize, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
 #[cfg_attr(
   feature = "std",
   derive(Serialize, Deserialize),
@@ -39,7 +41,7 @@ pub struct ShardsScriptInfo {
 
 // serde(rename_all = "camelCase") is needed or polkadot.js will not be able to deserialize
 
-#[derive(Encode, Decode, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
+#[derive(Encode, Decode, BorshSerialize, BorshDeserialize, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
 #[cfg_attr(
   feature = "std",
   derive(Serialize, Deserialize),
@@ -52,7 +54,7 @@ pub enum AudioCategories {
   Mp3File,
 }
 
-#[derive(Encode, Decode, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
+#[derive(Encode, Decode, BorshSerialize, BorshDeserialize, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
 #[cfg_attr(
   feature = "std",
   derive(Serialize, Deserialize),
@@ -67,7 +69,7 @@ pub enum ModelCategories {
   PhysicsCollider,
 }
 
-#[derive(Encode, Decode, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
+#[derive(Encode, Decode, BorshSerialize, BorshDeserialize, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
 #[cfg_attr(
   feature = "std",
   derive(Serialize, Deserialize),
@@ -78,7 +80,7 @@ pub enum TextureCategories {
   JpgFile,
 }
 
-#[derive(Encode, Decode, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
+#[derive(Encode, Decode, BorshSerialize, BorshDeserialize, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
 #[cfg_attr(
   feature = "std",
   derive(Serialize, Deserialize),
@@ -93,7 +95,7 @@ pub enum VectorCategories {
   OtfFile,
 }
 
-#[derive(Encode, Decode, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
+#[derive(Encode, Decode, BorshSerialize, BorshDeserialize, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
 #[cfg_attr(
   feature = "std",
   derive(Serialize, Deserialize),
@@ -106,7 +108,7 @@ pub enum VideoCategories {
   Mp4File,
 }
 
-#[derive(Encode, Decode, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
+#[derive(Encode, Decode, BorshSerialize, BorshDeserialize, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
 #[cfg_attr(
   feature = "std",
   derive(Serialize, Deserialize),
@@ -123,7 +125,7 @@ pub enum TextCategories {
   Markdown,
 }
 
-#[derive(Encode, Decode, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
+#[derive(Encode, Decode, BorshSerialize, BorshDeserialize, Copy, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
 #[cfg_attr(
   feature = "std",
   derive(Serialize, Deserialize),
@@ -145,7 +147,7 @@ pub enum BinaryCategories {
 }
 
 /// Types of categories that can be attached to a Proto-Fragment to describe it (e.g Code, Audio, Video etc.)
-#[derive(Encode, Decode, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
+#[derive(Encode, Decode, BorshSerialize, BorshDeserialize, Clone, PartialEq, Debug, Eq, scale_info::TypeInfo)]
 #[cfg_attr(
   feature = "std",
   derive(Serialize, Deserialize),
